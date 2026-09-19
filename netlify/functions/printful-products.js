@@ -1,23 +1,35 @@
-// Server-side Printful product proxy for The Everlight Chronicles.
-// The private Printful token is stored in Netlify as `printful_api_token`.
+// Server-side Printful proxy for The Everlight Chronicles.
+// Keeps the private Printful API token on Netlify.
 
-exports.handler = async function () {
+exports.handler = async function (event) {
   const token = process.env.printful_api_token;
 
   if (!token) {
     return {
       statusCode: 500,
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ error: "Printful API token is not configured." }),
+      body: JSON.stringify({
+        error: "Printful API token is not configured."
+      })
     };
   }
 
   try {
-    const response = await fetch("https://api.printful.com/store/products", {
+    // Optional product ID:
+    // /.netlify/functions/printful-products?id=123456
+    const productId =
+      event.queryStringParameters &&
+      event.queryStringParameters.id;
+
+    const url = productId
+      ? `https://api.printful.com/store/products/${encodeURIComponent(productId)}`
+      : "https://api.printful.com/store/products";
+
+    const response = await fetch(url, {
       headers: {
         Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
+        "Content-Type": "application/json"
+      }
     });
 
     const data = await response.json();
@@ -28,24 +40,47 @@ exports.handler = async function () {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           error: "Printful request failed.",
-          details: data,
-        }),
+          details: data
+        })
       };
     }
 
+    // PRODUCT DETAIL
+    // Returns the sync product plus all of its actual variants.
+    if (productId) {
+      return {
+        statusCode: 200,
+        headers: {
+          "content-type": "application/json",
+          "cache-control": "public, max-age=60"
+        },
+        body: JSON.stringify({
+          product: data.result
+        })
+      };
+    }
+
+    // PRODUCT LIST
+    // Keeps the existing website behavior intact.
     return {
       statusCode: 200,
       headers: {
         "content-type": "application/json",
-        "cache-control": "public, max-age=60",
+        "cache-control": "public, max-age=60"
       },
-      body: JSON.stringify({ products: data.result || [] }),
+      body: JSON.stringify({
+        products: data.result || []
+      })
     };
   } catch (error) {
+    console.error("Printful products error:", error);
+
     return {
       statusCode: 500,
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ error: "Unable to reach Printful." }),
+      body: JSON.stringify({
+        error: "Unable to reach Printful."
+      })
     };
   }
 };
