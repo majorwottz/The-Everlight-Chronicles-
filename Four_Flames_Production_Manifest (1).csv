@@ -1,0 +1,17 @@
+Keeper,Placement,Filename,Width_px,Height_px,Mode,Has_actual_transparency
+Kai,Front,Kai_Front_Artwork.png,2025,2565,RGBA,Yes
+Kai,Back,Kai_Back_Artwork.png,1695,2565,RGBA,Yes
+Kai,Left_Sleeve,Kai_Left_Sleeve_Artwork.png,918,1230,RGBA,Yes
+Kai,Right_Sleeve,Kai_Right_Sleeve_Artwork.png,918,1275,RGBA,Yes
+Zemi,Front,Zemi_Front_Artwork.png,2040,2880,RGBA,Yes
+Zemi,Back,Zemi_Back_Artwork.png,1680,2880,RGBA,Yes
+Zemi,Left_Sleeve,Zemi_Left_Sleeve_Artwork.png,933,1440,RGBA,Yes
+Zemi,Right_Sleeve,Zemi_Right_Sleeve_Artwork.png,933,1380,RGBA,Yes
+Finn,Front,Finn_Front_Artwork.png,2025,3072,RGBA,Yes
+Finn,Back,Finn_Back_Artwork.png,1659,3072,RGBA,Yes
+Finn,Left_Sleeve,Finn_Left_Sleeve_Artwork.png,924,1536,RGBA,Yes
+Finn,Right_Sleeve,Finn_Right_Sleeve_Artwork.png,924,1536,RGBA,Yes
+Lila,Front,Lila_Front_Artwork.png,1980,3072,RGBA,Yes
+Lila,Back,Lila_Back_Artwork.png,1380,3072,RGBA,Yes
+Lila,Left_Sleeve,Lila_Left_Sleeve_Artwork.png,645,3072,RGBA,Yes
+Lila,Right_Sleeve,Lila_Right_Sleeve_Artwork.png,738,3072,RGBA,Yes
