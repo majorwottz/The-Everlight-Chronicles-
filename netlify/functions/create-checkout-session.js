@@ -7,21 +7,71 @@ exports.handler = async function (event) {
   }
 
   try {
-    const { name, price, quantity = 1 } = JSON.parse(event.body || "{}");
+    const body = JSON.parse(event.body || "{}");
+    const variantId = body.variantId;
 
-    if (!name || !price) {
+    if (!variantId) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: "Missing product information" }),
+        body: JSON.stringify({ error: "Please select a size." }),
       };
     }
 
     const stripeKey = process.env.STRIPE_SECRET_KEY;
+    const printfulToken = process.env.printful_api_token;
 
     if (!stripeKey) {
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: "Stripe is not configured" }),
+        body: JSON.stringify({ error: "Stripe is not configured." }),
+      };
+    }
+
+    if (!printfulToken) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: "Printful is not configured." }),
+      };
+    }
+
+    // Get the selected variant directly from Printful.
+    const printfulResponse = await fetch(
+      `https://api.printful.com/store/variants/${variantId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${printfulToken}`,
+        },
+      }
+    );
+
+    const printfulData = await printfulResponse.json();
+
+    if (!printfulResponse.ok || !printfulData.result) {
+      console.error("Printful variant error:", printfulData);
+
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          error: "Unable to load the selected product size.",
+        }),
+      };
+    }
+
+    const variant = printfulData.result;
+
+    const name =
+      variant.name ||
+      variant.product?.name ||
+      "Everlight Chronicles Merchandise";
+
+    const price = variant.retail_price;
+
+    if (!price) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({
+          error: "Printful did not return a retail price.",
+        }),
       };
     }
 
@@ -30,7 +80,7 @@ exports.handler = async function (event) {
     if (!Number.isInteger(amount) || amount <= 0) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: "Invalid price" }),
+        body: JSON.stringify({ error: "Invalid product price." }),
       };
     }
 
@@ -43,21 +93,24 @@ exports.handler = async function (event) {
     params.append("success_url", `${origin}/?checkout=success`);
     params.append("cancel_url", `${origin}/?checkout=cancelled`);
 
-    params.append("line_items[0][price_data][currency]", "usd");
+    params.append(
+      "line_items[0][price_data][currency]",
+      "usd"
+    );
+
     params.append(
       "line_items[0][price_data][product_data][name]",
       String(name)
     );
+
     params.append(
       "line_items[0][price_data][unit_amount]",
       String(amount)
     );
-    params.append(
-      "line_items[0][quantity]",
-      String(Math.max(1, Number(quantity) || 1))
-    );
 
-    const response = await fetch(
+    params.append("line_items[0][quantity]", "1");
+
+    const stripeResponse = await fetch(
       "https://api.stripe.com/v1/checkout/sessions",
       {
         method: "POST",
@@ -69,14 +122,17 @@ exports.handler = async function (event) {
       }
     );
 
-    const session = await response.json();
+    const session = await stripeResponse.json();
 
-    if (!response.ok) {
+    if (!stripeResponse.ok) {
       console.error("Stripe error:", session);
+
       return {
-        statusCode: response.status,
+        statusCode: stripeResponse.status,
         body: JSON.stringify({
-          error: session?.error?.message || "Stripe checkout failed",
+          error:
+            session?.error?.message ||
+            "Stripe checkout failed.",
         }),
       };
     }
@@ -96,7 +152,7 @@ exports.handler = async function (event) {
     return {
       statusCode: 500,
       body: JSON.stringify({
-        error: "Unable to create checkout session",
+        error: "Unable to create checkout session.",
       }),
     };
   }
