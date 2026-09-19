@@ -1,0 +1,1 @@
+author.html automatically uses robert-watson-iii.svg if robert-watson-iii.jpg has not yet been uploaded.
