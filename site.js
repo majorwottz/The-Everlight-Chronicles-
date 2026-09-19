@@ -1,29 +1,21 @@
-async function startCheckout(variantId) {
+async function startCheckout(variantId, quantity) {
   try {
-    if (!variantId) {
-      throw new Error("Please select a size.");
-    }
+    if (!variantId) throw new Error("Please select a size.");
+
+    const safeQuantity = Math.max(1, Math.min(10, Number(quantity) || 1));
 
     const response = await fetch(
       "/.netlify/functions/create-checkout-session",
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ variantId })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ variantId, quantity: safeQuantity })
       }
     );
 
     const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "Unable to start checkout");
-    }
-
-    if (!data.url) {
-      throw new Error("Checkout URL was not returned");
-    }
+    if (!response.ok) throw new Error(data.error || "Unable to start checkout");
+    if (!data.url) throw new Error("Checkout URL was not returned");
 
     window.location.href = data.url;
   } catch (error) {
@@ -36,13 +28,8 @@ async function getProductDetails(productId) {
   const response = await fetch(
     `/api/printful/products?id=${encodeURIComponent(productId)}`
   );
-
   const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error || "Unable to load product sizes");
-  }
-
+  if (!response.ok) throw new Error(data.error || "Unable to load product sizes");
   return data.product;
 }
 
@@ -53,16 +40,11 @@ async function loadProducts() {
   try {
     const res = await fetch("/api/printful/products");
     const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || "Unable to load products");
-    }
+    if (!res.ok) throw new Error(data.error || "Unable to load products");
 
     const products = data.products || [];
-
     if (!products.length) {
-      root.innerHTML =
-        '<div class="loading">The Everlight Chronicles website store is connected. Add products in Printful and they will appear here.</div>';
+      root.innerHTML = '<div class="loading">The Everlight Chronicles website store is connected. Add products in Printful and they will appear here.</div>';
       return;
     }
 
@@ -77,23 +59,19 @@ async function loadProducts() {
           <p>Official Everlight Chronicles merchandise.</p>
           <div class="product-options">
             <label for="size-${index}">Size</label>
-            <select
-              id="size-${index}"
-              class="size-select"
-              data-size-index="${index}"
-              disabled
-            >
+            <select id="size-${index}" class="size-select" data-size-index="${index}" disabled>
               <option value="">Loading sizes...</option>
             </select>
+            <label for="quantity-${index}">Quantity</label>
+            <select id="quantity-${index}" class="quantity-select" data-quantity-index="${index}">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
           </div>
-          <button
-            type="button"
-            class="buy-button"
-            data-buy-index="${index}"
-            disabled
-          >
-            BUY NOW
-          </button>
+          <button type="button" class="buy-button" data-buy-index="${index}" disabled>BUY NOW</button>
         </article>
       `;
     }).join("");
@@ -101,6 +79,7 @@ async function loadProducts() {
     await Promise.all(
       products.map(async (product, index) => {
         const select = root.querySelector(`[data-size-index="${index}"]`);
+        const quantitySelect = root.querySelector(`[data-quantity-index="${index}"]`);
         const button = root.querySelector(`[data-buy-index="${index}"]`);
 
         try {
@@ -118,29 +97,25 @@ async function loadProducts() {
           select.innerHTML =
             '<option value="">Choose size</option>' +
             activeVariants.map((variant, variantIndex) => {
-              const size =
-                variant.size ||
-                variant.name ||
-                `Option ${variantIndex + 1}`;
-
+              const size = variant.size || variant.name || `Option ${variantIndex + 1}`;
               return `<option value="${variant.id}">${size}</option>`;
             }).join("");
 
           select.disabled = false;
-
           select.addEventListener("change", () => {
             button.disabled = !select.value;
           });
 
           button.addEventListener("click", () => {
             const variantId = select.value;
+            const quantity = Number(quantitySelect.value) || 1;
 
             if (!variantId) {
               alert("Please choose a size first.");
               return;
             }
 
-            startCheckout(variantId);
+            startCheckout(variantId, quantity);
           });
         } catch (error) {
           console.error("Unable to load variants:", error);
@@ -151,8 +126,7 @@ async function loadProducts() {
     );
   } catch (error) {
     console.error(error);
-    root.innerHTML =
-      '<div class="loading">Shop could not be loaded. Please try again.</div>';
+    root.innerHTML = '<div class="loading">Shop could not be loaded. Please try again.</div>';
   }
 }
 
