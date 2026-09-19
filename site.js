@@ -6,8 +6,11 @@ async function startCheckout(product) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        product: product
-      })
+  name: product.name,
+  price: product.retail_price || product.price,
+  quantity: 1
+})
+    })
     });
 
     const data = await response.json();
