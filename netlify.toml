@@ -9,6 +9,33 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
 
+# V10 recovery compatibility: the recovered package was uploaded with its
+# assets and Keeper pages at repository root. Preserve the original V10 HTML,
+# CSS and JS unchanged by transparently mapping their expected URLs here.
+[[redirects]]
+  from = "/assets/*"
+  to = "/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/keepers/kai.html"
+  to = "/kai.html"
+  status = 200
+
+[[redirects]]
+  from = "/keepers/zemi.html"
+  to = "/zemi.html"
+  status = 200
+
+[[redirects]]
+  from = "/keepers/finn.html"
+  to = "/finn.html"
+  status = 200
+
+[[redirects]]
+  from = "/keepers/lila.html"
+  to = "/lila.html"
+  status = 200
 
 [[redirects]]
   from = "/api/printful/products"
