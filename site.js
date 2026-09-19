@@ -210,10 +210,9 @@ async function loadProducts() {
                 return;
               }
 
-              const selectedVariant =
-                activeVariants[
-                  Number(select.value)
-                ];
+              const selectedVariant = activeVariants.find(
+  variant => String(variant.id) === String(select.value)
+);
 
               startCheckout(
                 product,
